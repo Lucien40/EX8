@@ -162,6 +162,8 @@ double xmoy(vec_cmplx const& psi, const vector<double>& x, double const& dx);
 double x2moy(vec_cmplx const& psi, const vector<double>& x, double const& dx);
 double pmoy(vec_cmplx const& psi, double const& dx);
 double p2moy(vec_cmplx const& psi, double const& dx);
+double deltaxMoy(vec_cmplx const& psi, vector<double> const& x, double dx);
+double deltapMoy(vec_cmplx const& psi, double dx);
 
 // Fonction pour normaliser une fonction d'onde :
 vec_cmplx normalize(vec_cmplx const& psi, double const& dx);
@@ -224,31 +226,35 @@ int main(int argc, char** argv) {
   vec_cmplx dB(Npoints), aB(Ninters),
       cB(Ninters);  // matrice du membre de droite de l'equation (4.90)
 
-  complex<double> a, b;
+  complex<double> a, b, h;
 
   // TODO: calculer les elements des matrices A, B et H.
   // Ces matrices sont stockees sous forme tridiagonale, d:diagonale, c et a:
   // diagonales superieures et inferieures
 
+  h = -hbar * hbar / 2.0 / m / dx / dx;
+  a = complex_i * dt / 2.0 / hbar;
+  b = -a;
+
   for (size_t i = 0; i < Npoints; i++) {
-    dH[i] = hbar / m + V(x[i], omega, delta);
+    dH[i] = -2.0 * h + V(x[i], omega, delta);
   }
 
   for (size_t i = 0; i < Ninters; i++) {
-    aH[i] = -hbar / (2.0 * m);
+    aH[i] = 1.0 * h;
     cH[i] = aH[i];
   }
 
   for (size_t i = 0; i < Npoints; i++) {
-    dA[i] = 1. + complex_i * dt / (2.0 * hbar) * dH[i];
-    dB[i] = 1. - complex_i * dt / (2.0 * hbar) * dH[i];
+    dA[i] = 1. + a * dH[i];
+    dB[i] = 1. + b * dH[i];
   }
 
   for (size_t i = 0; i < Ninters; i++) {
-    cA[i] = dt / (2.0 * hbar) * cH[i];
-    aA[i] = dt / (2.0 * hbar) * aH[i];
-    cB[i] = dt / (2.0 * hbar) * cH[i];
-    aB[i] = dt / (2.0 * hbar) * aH[i];
+    cA[i] = a * cH[i];
+    aA[i] = a * aH[i];
+    cB[i] = b * cH[i];
+    aB[i] = b * aH[i];
   }
 
   // Conditions aux limites: psi nulle aux deux bords
@@ -259,7 +265,10 @@ int main(int argc, char** argv) {
   aB[0] = 0;
   dA[0] = 1;
   dB[0] = 1;
-
+  dB.back() = 1;
+  dA.back() = 1;
+  cA.back() = 0;
+  cB.back() = 0;
   // Fichiers de sortie :
   string output = configFile.get<string>("output");
 
@@ -294,7 +303,10 @@ int main(int argc, char** argv) {
                         << x2moy(psi, x, dx) << " "       // Position^2 moyenne
                         << pmoy(psi, dx)
                         << " "  // Quantite de mouvement moyenne
-                        << p2moy(psi, dx)
+                        << p2moy(psi, dx) << " "  //     incertitude de pos:
+                        << deltaxMoy(psi, x, dx)
+                        << " "  //    incertitude de pos:
+                        << deltapMoy(psi, dx)
                         << endl;  // (Quantite de mouvement)^2 moyenne
 
     // Calcul du membre de droite :
@@ -319,7 +331,9 @@ int main(int argc, char** argv) {
                       << " " << prob(psi, Ninters * xL / (xL - xR), Ninters, dx)
                       << " " << E(psi, dH, aH, cH, dx) << " "
                       << xmoy(psi, x, dx) << " " << x2moy(psi, x, dx) << " "
-                      << pmoy(psi, dx) << " " << p2moy(psi, dx) << endl;
+                      << pmoy(psi, dx) << " " << p2moy(psi, dx) << " "
+                      << deltaxMoy(psi, x, dx) << " " << deltapMoy(psi, dx)
+                      << endl;
 
   fichier_observables.close();
   fichier_psi.close();
@@ -330,7 +344,7 @@ double prob(vec_cmplx const& psi, int nL, int nR, double dx) {
   // nL.dx et nR.dx
   vec_cmplx::const_iterator begin = psi.begin() + nL;
   vec_cmplx::const_iterator last = psi.begin() + nR;
-  vec_cmplx psiin(begin + 1, last);
+  vec_cmplx psiin(begin, last + 1);
   vector<double> normpsi;
   for (auto comp : psiin) {
     normpsi.push_back(norm(comp));
@@ -340,7 +354,7 @@ double prob(vec_cmplx const& psi, int nL, int nR, double dx) {
 
 double E(vec_cmplx const& psi, vec_cmplx const& diagH, vec_cmplx const& lowerH,
          vec_cmplx const& upperH, double const& dx) {
-  vec_cmplx psi_tmp(psi.size());
+  vec_cmplx psi_tmp(psi);
 
   // TODO: calculer la moyenne de l'Hamiltonien
 
@@ -352,7 +366,6 @@ double E(vec_cmplx const& psi, vec_cmplx const& diagH, vec_cmplx const& lowerH,
 
   vector<double> psiHpsi(
       real(conj(psi_tmp) * (tridiag(diagH, lowerH, upperH, psi_tmp))));
-
   return trapeze(psiHpsi, dx);
 }
 

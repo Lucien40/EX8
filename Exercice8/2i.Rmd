@@ -17,9 +17,9 @@ executable = 'Exercice8'; # Nom de l'executable (NB: ajouter .exe sous Windows)
 input = '2i.in'; # Nom du fichier d'entree de base
 
 
-nsimul = 10;
+nsimul = 1;
 tfin = 5000;
-tsteps = exp(log(10)*seq(2,4,len = nsimul));
+tsteps = exp(log(10)*seq(3,4,len = nsimul));
 dt= tfin / tsteps;
 paramstr = 'dt';
 
@@ -46,6 +46,8 @@ xmoyconv = rep(1,nsimul);
 x2moyconv = rep(1,nsimul);
 pmoyconv = rep(1,nsimul);
 p2moyconv = rep(1,nsimul);
+incertxconv = rep(1,nsimul);
+incertpconv = rep(1,nsimul);
 
 for (i in 1:nsimul){
   fichier = output[i];
@@ -60,6 +62,8 @@ for (i in 1:nsimul){
   x2moy = data[,6];
   pmoy = data[,7];
   p2moy = data[,8];
+  incertx = data[,9];
+  incertp = data[,10];
   probleftconv[i] = tail(probleft,1);
   probrightconv [i] = tail(probright,1);
   Econv [i] = tail(E,1);
@@ -67,6 +71,8 @@ for (i in 1:nsimul){
   x2moyconv [i] = tail(x2moy,1);
   pmoyconv [i] = tail(pmoy,1);
   p2moyconv [i] = tail(p2moy,1);
+  incertpconv [i] = tail(incertp,1);
+  incertxconv [i] = tail(incertx,1);
   
   data = as.matrix(read.table(paste(fichier,'_pot.out',sep=''),sep=' '));
   x = data[,1];
@@ -75,11 +81,9 @@ for (i in 1:nsimul){
 
 data <- tibble(tsteps,xmoyconv,pmoyconv,probleftconv)
 
-tikz(file = "plot_test.tex", width = 5, height = 5)
-a <-ggplot(data = data,mapping = aes(x=tsteps,y=xmoyconv))
-a + geom_point();
+a <-ggplot(data = data,mapping = aes(x=dt*dt,y=xmoyconv)) + geom_point();
 
-dev.off()
+print(a);
 
 ```
 
