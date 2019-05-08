@@ -1,0 +1,85 @@
+---
+p
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+```{r include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(tikzDevice)
+
+repertoire = './'; # Chemin d'acces au code compile (NB: enlever le ./ sous Windows)
+executable = 'Exercice8'; # Nom de l'executable (NB: ajouter .exe sous Windows)
+input = '2i.in'; # Nom du fichier d'entree de base
+
+
+nsimul = 10;
+tfin = 5000;
+tsteps = exp(log(10)*seq(2,4,len = nsimul));
+dt= tfin / tsteps;
+paramstr = 'dt';
+
+output = rep(1, nsimul); # Tableau de cellules contenant le nom des fichiers de sortie
+for (i in 1:nsimul){
+  output[i] = str_c(paramstr, '=', dt[i]);
+    # Execution du programme en lui envoyant la valeur a scanner en argument
+    cmd = sprintf('wsl %s%s %s dt=%.15g  output=%s', repertoire, executable, input, dt[i],output[i]);
+
+  system(cmd);
+}
+
+
+```
+
+
+```{r}
+
+
+probleftconv = rep(1,nsimul);
+probrightconv = rep(1,nsimul);
+Econv = rep(1,nsimul);
+xmoyconv = rep(1,nsimul);
+x2moyconv = rep(1,nsimul);
+pmoyconv = rep(1,nsimul);
+p2moyconv = rep(1,nsimul);
+
+for (i in 1:nsimul){
+  fichier = output[i];
+  data = read.table(paste(fichier,'_psi2.out',sep=''));
+  psi2 = data[,];
+  data = read.table(paste(fichier,'_obs.out',sep=''));
+  t = data[,1];
+  probleft = data[,2];
+  probright = data[,3];
+  E = data[,4];
+  xmoy = data[,5];
+  x2moy = data[,6];
+  pmoy = data[,7];
+  p2moy = data[,8];
+  probleftconv[i] = tail(probleft,1);
+  probrightconv [i] = tail(probright,1);
+  Econv [i] = tail(E,1);
+  xmoyconv [i] = tail(xmoy,1);
+  x2moyconv [i] = tail(x2moy,1);
+  pmoyconv [i] = tail(pmoy,1);
+  p2moyconv [i] = tail(p2moy,1);
+  
+  data = as.matrix(read.table(paste(fichier,'_pot.out',sep=''),sep=' '));
+  x = data[,1];
+  V = data[,2];
+}
+
+data <- tibble(tsteps,xmoyconv,pmoyconv,probleftconv)
+
+tikz(file = "plot_test.tex", width = 5, height = 5)
+a <-ggplot(data = data,mapping = aes(x=tsteps,y=xmoyconv))
+a + geom_point();
+
+dev.off()
+
+```
+
