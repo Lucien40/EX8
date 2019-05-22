@@ -145,6 +145,17 @@ vec_cmplx centerdiff2(const vec_cmplx& in, double dx) {
   out.back() = 0;
   return out;
 }
+// Fonction pour normaliser une fonction d'onde :
+vec_cmplx normalize(vec_cmplx const& psi, double const& dx);
+
+void detect(vec_cmplx& wave, vector<double> space, double dx) {
+  if (space.size() == wave.size()) {
+    for (size_t i = 0; i < wave.size(); i++) {
+      if (space[i] < 0) wave[i] = 0;
+    }
+  }
+  wave = normalize(wave, dx);
+}
 
 // Declaration des diagnostiques de la particule d'apres sa fonction d'onde
 // psi :
@@ -164,9 +175,6 @@ double pmoy(vec_cmplx const& psi, double const& dx);
 double p2moy(vec_cmplx const& psi, double const& dx);
 double deltaxMoy(vec_cmplx const& psi, vector<double> const& x, double dx);
 double deltapMoy(vec_cmplx const& psi, double dx);
-
-// Fonction pour normaliser une fonction d'onde :
-vec_cmplx normalize(vec_cmplx const& psi, double const& dx);
 
 // Les definitions de ces fonctions sont en dessous du main.
 
@@ -194,8 +202,9 @@ int main(int argc, char** argv) {
   double omega = configFile.get<double>("omega");
   double delta = configFile.get<double>("delta");
   double x0 = configFile.get<double>("x0");
-  double k0 = 2. * M_PI * configFile.get<int>("n") / (xR - xL);
+  double k0 = 2. * M_PI * configFile.get<double>("n") / (xR - xL);
   double sigma0 = configFile.get<double>("sigma_norm") * (xR - xL);
+  double t_detect = configFile.get<double>("t_detect");
 
   // Parametres numeriques :
   double dt = configFile.get<double>("dt");
@@ -312,6 +321,8 @@ int main(int argc, char** argv) {
                         << " "  //    incertitude de pos:
                         << deltapMoy(psi, dx)
                         << endl;  // (Quantite de mouvement)^2 moyenne
+
+    if (t_detect > 0 && t_detect < t + dt) detect(psi, x, dx);
 
     // Calcul du membre de droite :
     vec_cmplx psi_tmp(Npoints, 0.);
