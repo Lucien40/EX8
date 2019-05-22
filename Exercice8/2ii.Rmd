@@ -1,0 +1,91 @@
+---
+title: "2 ii"
+output: html_notebook
+---
+
+```{r}
+
+library(tidyverse)
+library(ggplot2)
+library(tikzDevice)
+library(colorRamps)
+library(cowplot)
+
+repertoire = './'; # Chemin d'acces au code compile (NB: enlever le ./ sous Windows)
+executable = 'Exercice8'; # Nom de l'executable (NB: ajouter .exe sous Windows)
+input = '2ii.in'; # Nom du fichier d'entree de base
+
+
+
+
+  output = str_c('2ii');
+  cmd = sprintf('wsl %s%s %s  output=%s', repertoire, executable, input,output);
+   system(cmd);
+
+fichier = output;
+data = read.table(paste(fichier,'_psi2.out',sep=''));
+psi2 = data[,];i
+data = read.table(paste(fichier,'_obs.out',sep=''));
+t = data[,1];
+probleft = data[,2];
+probright = data[,3];
+E = data[,4];
+xmoy = data[,5];
+x2moy = data[,6];
+pmoy = data[,7];
+p2moy = data[,8];
+incertx = data[,9];
+incertp = data[,10];
+data = as.matrix(read.table(paste(fichier,'_pot.out',sep=''),sep=' '));
+x = data[,1];
+V = data[,2];
+
+observable <- tibble(t=t,probleft = probleft,probright=probright,E=E,xmoy=xmoy,x2moy=x2moy,pmoy= pmoy,p2moy=p2moy,incertx=incertx,incertp=incertp);
+
+pot <- tibble(x=x,V=V);
+
+```
+```{r}
+
+p1 <-ggplot(data = observable) + geom_line(aes(x=t,y=xmoy,color='red')) + geom_line(aes(x=t,y=-sqrt(2*E[1])*cos(0.003 *t + pi*0.5)/0.003));
+
+
+
+
+#print(a);
+
+p2 <-ggplot(data = observable) + geom_line(aes(x=t,y=E)) 
+
+
+p3 <- ggplot(observable) + geom_point(aes(x=t,y=incertp*incertx))
+p4 <- ggplot(observable) + geom_point(aes(x=t,y=probleft+probright))
+p <- plot_grid(p1, p2,p3,p4,labels=c('A', 'B'))
+
+
+#print(p)
+```
+```{r}
+X = rep(x,each=length(t));
+T = rep(t,length(x));
+
+
+p<-as_tibble(psi2,rownames(t));
+pp <- gather(p);
+
+mat <- tibble(x=X,t=T,psi=pp$value);
+
+```
+
+
+
+
+```{r}
+
+b <- ggplot(data =mat,aes(x =X,y = T,z= psi)) + geom_raster(aes(fill= psi),interpolate = TRUE) +
+   scale_fill_gradientn(colours=matlab.like(6))
+print(b)
+
+
+```
+
+End

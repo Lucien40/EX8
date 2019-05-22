@@ -17,7 +17,7 @@ executable = 'Exercice8'; # Nom de l'executable (NB: ajouter .exe sous Windows)
 input = '2i.in'; # Nom du fichier d'entree de base
 
 
-nsimul = 1;
+nsimul = 2;
 tfin = 5000;
 tsteps = exp(log(10)*seq(3,4,len = nsimul));
 dt= tfin / tsteps;

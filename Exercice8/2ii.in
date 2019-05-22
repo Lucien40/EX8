@@ -1,15 +1,15 @@
 % Physique :
-tfin = 5000
+tfin = 50
 xL = -200
 xR = 200
 omega = 0.003
-delta = 0
-x0 = 0
+delta = 77
+x0 = -77
 n = 14
 sigma_norm = 0.06
 t_detect = -1
 
-% Numérique :
-dt = 1
+% NumÃ©rique :
+dt = 5
 Ninters = 300
 output = output

@@ -262,12 +262,16 @@ int main(int argc, char** argv) {
   // limites
 
   aA[0] = 0;
+  cA[0] = 0;
   aB[0] = 0;
+  cB[0] = 0;
   dA[0] = 1;
   dB[0] = 1;
   dB.back() = 1;
   dA.back() = 1;
   cA.back() = 0;
+  aA.back() = 0;
+  aB.back() = 0;
   cB.back() = 0;
   // Fichiers de sortie :
   string output = configFile.get<string>("output");
