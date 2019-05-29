@@ -1,0 +1,66 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(tikzDevice)
+library(RColorBrewer)
+display.brewer.all()
+library(cowplot)
+
+repertoire = './'; # Chemin d'acces au code compile (NB: enlever le ./ sous Windows)
+executable = 'Exercice8'; # Nom de l'executable (NB: ajouter .exe sous Windows)
+input = '2ex.in'; # Nom du fichier d'entree de base
+
+
+nsimul = 30;
+
+
+sig = seq(0,0.1,nsimul)
+output = rep(1, nsimul);
+incertxconv = rep(1,nsimul);
+paramstr = 'sig';
+for (i in 1:nsimul){
+  output[i] = str_c(paramstr, '=', dt[i]);
+  cmd = sprintf('wsl %s%s %s  output=%s sigma_norm=%.15g', repertoire, executable,input,output[i],sig[i]);
+  system(cmd);
+
+fichier = output[i];
+data = read.table(paste(fichier,'_obs.out',sep=''));
+
+observableDet <- tibble(t=data[,1],
+                     probleft= data[,2],
+                     probright = data[,3],
+                     E = data[,4],
+                     xmoy= data[,5],
+                     x2moy= data[,6],
+                     pmoy= data[,7],
+                     p2moy =data[,8],
+                     incertx = data[,9],
+                     incertp =  data[,10]);
+
+data = as.matrix(read.table(paste(fichier,'_pot.out',sep=''),sep=' '));
+
+potDet <- tibble(x=data[,1],V= data[,2]);
+
+
+
+# data = read.table(paste(fichier,'_psi2.out',sep=''));
+# X = rep(potDet$x,each=length(observableDet$t));
+# T = rep(observableDet$t,length(potDet$x));
+# psi2 = data[,]
+# 
+# p<-as_tibble(psi2 ,rownames(observableDet$t))
+# p
+# pp <- gather(p);
+# pp
+# matDet <- tibble(x=X,t=T,psi=pp$value);
+incertxconv[i] = max(diff(incertx));
+}
+```
+

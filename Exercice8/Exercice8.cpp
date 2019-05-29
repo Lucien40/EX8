@@ -322,7 +322,7 @@ int main(int argc, char** argv) {
                         << deltapMoy(psi, dx)
                         << endl;  // (Quantite de mouvement)^2 moyenne
 
-    if (t_detect > 0 && t_detect < t + dt) detect(psi, x, dx);
+    if (t_detect > 0 && abs(t - t_detect) < dt / 2.0) detect(psi, x, dx);
 
     // Calcul du membre de droite :
     vec_cmplx psi_tmp(Npoints, 0.);

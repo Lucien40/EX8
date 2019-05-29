@@ -24,7 +24,7 @@ input = '2ii.in'; # Nom du fichier d'entree de base
 
 fichier = output;
 data = read.table(paste(fichier,'_psi2.out',sep=''));
-psi2 = data[,];i
+psi2 = data[,];
 data = read.table(paste(fichier,'_obs.out',sep=''));
 t = data[,1];
 probleft = data[,2];
@@ -84,6 +84,17 @@ mat <- tibble(x=X,t=T,psi=pp$value);
 b <- ggplot(data =mat,aes(x =X,y = T,z= psi)) + geom_raster(aes(fill= psi),interpolate = TRUE) +
    scale_fill_gradientn(colours=matlab.like(6))
 print(b)
+
+
+psi2 <-t(psi2)
+rownames(psi2) <- x
+colnames(psi2) <- t
+data <- tibble(psi2,rownames='x')
+data
+for (time in t) {
+   p <- ggplot(data,aes(x=x,y=select(psi2,time))) + geom_point() 
+   p
+}
 
 
 ```

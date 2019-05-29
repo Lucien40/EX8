@@ -1,0 +1,163 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(tikzDevice)
+library(colorRamps)
+library(cowplot)
+
+repertoire = './'; # Chemin d'acces au code compile (NB: enlever le ./ sous Windows)
+executable = 'Exercice8'; # Nom de l'executable (NB: ajouter .exe sous Windows)
+input = '2iv.in'; # Nom du fichier d'entree de base
+
+
+
+
+  output = str_c('2iv');
+  cmd = sprintf('wsl %s%s %s  output=%s t_detect=1000', repertoire, executable, input,output);
+  system(cmd);
+
+fichier = output;
+data = read.table(paste(fichier,'_obs.out',sep=''));
+
+observableDet <- tibble(t=data[,1],
+                     probleft= data[,2],
+                     probright = data[,3],
+                     E = data[,4],
+                     xmoy= data[,5],
+                     x2moy= data[,6],
+                     pmoy= data[,7],
+                     p2moy =data[,8],
+                     incertx = data[,9],
+                     incertp =  data[,10]);
+
+data = as.matrix(read.table(paste(fichier,'_pot.out',sep=''),sep=' '));
+
+potDet <- tibble(x=data[,1],V= data[,2]);
+
+
+data = read.table(paste(fichier,'_psi2.out',sep=''));
+X = rep(potDet$x,each=length(observableDet$t));
+T = rep(observableDet$t,length(potDet$x));
+psi2 = data[,]
+
+p<-as_tibble(psi2 ,rownames(observableDet$t))
+p
+pp <- gather(p);
+pp
+matDet <- tibble(x=X,t=T,psi=pp$value);
+
+
+```
+
+
+```{r}
+b <- ggplot(data =matDet,aes(x =X,y = T,z= psi)) + geom_raster(aes(fill= psi),interpolate = TRUE) +
+   scale_fill_gradientn(colours=matlab.like(6))
+print(b)
+dev.off()
+
+
+
+```
+
+```{r}
+  output = str_c('2iv');
+  cmd = sprintf('wsl %s%s %s dt=5 output=%s t_detect=-1000', repertoire, executable, input,output);
+  system(cmd);
+
+fichier = output;
+data = read.table(paste(fichier,'_obs.out',sep=''));
+
+observableNat <- tibble(t=data[,1],
+                     probleft= data[,2],
+                     probright = data[,3],
+                     E = data[,4],
+                     xmoy= data[,5],
+                     x2moy= data[,6],
+                     pmoy= data[,7],
+                     p2moy =data[,8],
+                     incertx = data[,9],
+                     incertp =  data[,10]);
+
+data = as.matrix(read.table(paste(fichier,'_pot.out',sep=''),sep=' '));
+
+potNat <- tibble(x=data[,1],V= data[,2]);
+
+
+data = read.table(paste(fichier,'_psi2.out',sep=''));
+X = rep(potNat$x,each=length(observableNat$t));
+T = rep(observableNat$t,length(potNat$x));
+
+psi2= data[,];
+p<-as_tibble(psi2,rownames(observableNat$t));
+pp <- gather(p);
+matNat <- tibble(x=X,t=T,psi=pp$value);
+
+
+
+```
+```{r}
+tikz("test.tex",width = 14,height = 2,onefile = FALSE,standAlone = TRUE);
+p2 <-ggplot(observableDet) + geom_line(aes(x=t,y=E)) 
+
+
+p3 <- ggplot(observableDet) + geom_line(aes(x=t,y=incertx))
+p4 <- ggplot(observableDet) + geom_line(aes(x=t,y=incertp))
+p6 <- ggplot(observableDet) + geom_line(aes(x=t,y=incertp*incertx))
+
+p1 <- ggplot(observableDet) + geom_line(aes(x=t,y=pmoy))
+p5 <- ggplot(observableDet) + geom_line(aes(x=t,y=xmoy))
+p <- plot_grid(p1, p2,p3,labels=c('A', 'B'))
+
+print(p)
+dev.off()
+```
+
+
+```{r}
+b <- ggplot(data =matNat,aes(x =X,y = T,z= psi)) + geom_raster(aes(fill= psi),interpolate = TRUE) +
+   scale_fill_gradientn(colours=matlab.like(6))
+print(b)
+```
+We now need to check the probability of finding the particle to the left and to the right.
+
+
+```{r}
+observableNat$probleft[observable$t==3000];
+observableNat$probright[observable$t==3000];
+observableDet$probleft[observable$t==3000];
+observableDet$probright[observable$t==3000];
+```
+
+
+
+
+```{r}
+p <- mat %>%
+     plot_ly(
+         x = ~X,
+         y = ~psi,
+         frame = ~T,
+         type = 'scatter',
+         mode = 'markers',
+         showlegend = F
+     )
+animation_opts(p, frame = 300, transition = 200, easing = "linear",
+  redraw = FALSE, mode = "immediate")
+p
+```
+
+```{r}
+mat
+
+p <- ggplot(mat) + geom_point(aes(x=x,y=psi)) + transition_time(t)
+animate(p,nframes = 2*length(unique(mat$t)))
+```
+

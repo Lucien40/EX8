@@ -6,6 +6,10 @@ output:
     df_print: paged
 ---
 
+## Test of the algorithm in the case of a haromic oscillator
+
+With N=300, the dt was varied from 1e3 to 1e4 and thus the convergence can be examined.
+
 
 ```{r include=FALSE}
 library(tidyverse)
@@ -17,9 +21,10 @@ executable = 'Exercice8'; # Nom de l'executable (NB: ajouter .exe sous Windows)
 input = '2i.in'; # Nom du fichier d'entree de base
 
 
-nsimul = 2;
+nsimul = 30;
 tfin = 5000;
-tsteps = exp(log(10)*seq(3,4,len = nsimul));
+
+tsteps = floor(1/(seq(0.02,0.01,len=nsimul))^2) #exp(log(10)*seq(3,4.5,len = nsimul));
 dt= tfin / tsteps;
 paramstr = 'dt';
 
@@ -29,7 +34,7 @@ for (i in 1:nsimul){
     # Execution du programme en lui envoyant la valeur a scanner en argument
     cmd = sprintf('wsl %s%s %s dt=%.15g  output=%s', repertoire, executable, input, dt[i],output[i]);
 
-  system(cmd);
+  #system(cmd);
 }
 
 
@@ -79,9 +84,10 @@ for (i in 1:nsimul){
   V = data[,2];
 }
 
-data <- tibble(tsteps,xmoyconv,pmoyconv,probleftconv)
+data <- tibble(tsteps,xmoyconv,pmoyconv,incertxconv,incertpconv)
 
-a <-ggplot(data = data,mapping = aes(x=dt*dt,y=xmoyconv)) + geom_point();
+a <-ggplot(data = data,mapping = aes(x=dt*dt,y=incertpconv)) + geom_point() + coord_trans(xtrans = 'log10',ytrans = 'log10')
+
 
 print(a);
 

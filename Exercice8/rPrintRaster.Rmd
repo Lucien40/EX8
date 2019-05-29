@@ -1,0 +1,74 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+require(tidyverse)
+require(ggplot2)
+require(tikzDevice)
+require(colorRamps)
+require(cowplot)
+
+repertoire = './'; # Chemin d'acces au code compile (NB: enlever le ./ sous Windows)
+executable = 'Exercice8'; # Nom de l'executable (NB: ajouter .exe sous Windows)
+input = '2iv.in'; # Nom du fichier d'entree de base
+
+
+output = str_c('2iv');
+cmd = sprintf('wsl %s%s %s  output=%s', repertoire, executable, input,output);
+system(cmd);
+
+fichier = output;
+data = read.table(paste(fichier,'_obs.out',sep=''));
+
+observableDet <- tibble(t=data[,1],
+                     probleft= data[,2],
+                     probright = data[,3],
+                     E = data[,4],
+                     xmoy= data[,5],
+                     x2moy= data[,6],
+                     pmoy= data[,7],
+                     p2moy =data[,8],
+                     incertx = data[,9],
+                     incertp =  data[,10]);
+
+data = as.matrix(read.table(paste(fichier,'_pot.out',sep=''),sep=' '));
+
+potDet <- tibble(x=data[,1],V= data[,2]);
+
+
+data = read.table(paste(fichier,'_psi2.out',sep=''));
+X = rep(potDet$x,each=length(observableDet$t));
+T = rep(observableDet$t,length(potDet$x));
+psi2 = data[,]
+
+p<-as_tibble(psi2 ,rownames(observableDet$t))
+p
+pp <- gather(p);
+pp
+matDet <- tibble(x=X,t=T,psi=pp$value);
+
+
+
+name<-"test.tex"
+w= 3;
+h = 2 * w / (sqrt(5) + 1) 
+
+tikz(name,width = w,height = h,onefile = FALSE,standAlone = TRUE);
+plot <- ggplot(data =matDet,aes(x =X,y = T,z= psi)) + geom_raster(aes(fill= psi),interpolate = TRUE) +
+   scale_fill_gradientn(colours=matlab.like(6))
+print(plot)
+dev.off();
+system(paste("pdflatex ",name))
+
+```
+
+
