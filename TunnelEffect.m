@@ -7,14 +7,14 @@ omega = 0.003;
 % n = 14;
 % L = 400;
 % E0 = 2 * pi^2 * n^2 / L^2;
-E0 = 0.0257;
+E0 = 0.0258;
 ratioVE = 0:0.1:2;
 param = 'delta';
 paramval = sqrt(2 * ratioVE * E0)/omega;
 nsimul = length(paramval);
 
 %% Simulations 
-for i = 1:nsimul
+for i = [8,11,14]
     cmd = sprintf('wsl %s%s %s %s=%.15g %s=%.15g %s=%s', repertoire, executable, input,...
                                              param, paramval(i), 'x0', -paramval(i),...
                                              'output', [param '=' num2str(paramval(i))]);
@@ -41,7 +41,7 @@ Analyse(fichier,delta,omega)
 % liveWave(x,t,psi2,m)
 
 %% All simulations
-for i = 1:1
+for i = [8,11,14]
     fichier = [param '=' num2str(paramval(i))];
     delta = paramval(i);
     psi2 = load([fichier '_psi2.out']);
@@ -52,22 +52,32 @@ for i = 1:1
     E = data(:,4);
     data = load([fichier '_pot.out']);
     x = data(:,1);
-%     V = data(:,2);
+    V = data(:,2);
     V0 = 0.5 * omega^2 * paramval(i)^2;
     xbar = delta - sqrt(2 * E(1)) / omega;
     
-    figure('Name',[param,' = ',num2str(paramval(i)),'; ',...
-        'p_0 = ',num2str(ratioVE(i)),'; ',...
-        'p_1 = ',num2str(V0/E(1)),'; ',...
-        'E_1 = ',num2str(E(1)),'; ',...
-        'V_0 = ',num2str(V0),'; ',...
-        'width',num2str(2 * xbar)])
-    subplot(1,2,1)
+    H = 5;
+    W = 8;
+    figuA = figure;
+    figuA.PaperUnits = 'centimeters';
+    figuA.Units = 'centimeters';
+    figuA.InvertHardcopy = 'on';
+    figuA.PaperSize = [W H];
+    figuA.PaperPosition = [0 0 W H];
+    figuA.Position = [10 10 W H];
+    
+%     figure('Name',[param,' = ',num2str(paramval(i)),'; ',...
+%         'p_0 = ',num2str(ratioVE(i)),'; ',...
+%         'p_1 = ',num2str(V0/E(1)),'; ',...
+%         'E_1 = ',num2str(E(1)),'; ',...
+%         'V_0 = ',num2str(V0),'; ',...
+%         'width',num2str(2 * xbar)])
+%     subplot(1,2,1)
     hold on
     pcolor(x,t,psi2)
-    if V0 > E(1)
-        plot([xbar,xbar],[min(t),max(t)],'w--')
-        plot([-xbar,-xbar],[min(t),max(t)],'w--')
+    if V0 >= E(1)
+        plot([xbar,xbar],[min(t),max(t)],'w--','LineWidth',1)
+        plot([-xbar,-xbar],[min(t),max(t)],'w--','LineWidth',1)
     end
     hold off
     shading interp
@@ -76,10 +86,32 @@ for i = 1:1
     xlabel('x [m]')
     ylabel('t [s]')
     ylabel(c,'|\psi|^2')
+    title(['$\Delta$ = ',num2str(paramval(i)),';   ',...
+        '$V_0$ = ',num2str(V0),';   ',...
+        '$p$ = ',num2str(V0/E(1))])
     
-    subplot(1,2,2)
-    plot(t,probn,'r',...
-        t,probp,'b',t,probn + probp,'m','LineWidth',1)
+%     subplot(1,2,2)
+    H = 5;
+    W = 8;
+    figuA = figure;
+    figuA.PaperUnits = 'centimeters';
+    figuA.Units = 'centimeters';
+    figuA.InvertHardcopy = 'on';
+    figuA.PaperSize = [W H];
+    figuA.PaperPosition = [0 0 W H];
+    figuA.Position = [10 10 W H];
+    hold on
+    plot(t,probn,'Color',colors(6,:),'LineWidth',1)
+    plot(t,probp,'Color',colors(2,:),'LineWidth',1)
+    plot(t,probn + probp,'Color',colors(10,:),'LineWidth',1)
+    hold off
+    grid on
+    leg = legend('$P(x<0)$','$P(x>0)$','$P_\mathrm{total}$');
+%     leg.Color = 'none';
+    leg.Location = 'best';
+    title(['$\Delta$ = ',num2str(paramval(i)),';   ',...
+        '$V_0$ = ',num2str(V0),';   ',...
+        '$p$ = ',num2str(V0/E(1))])
     xlabel('t [s]')
     ylabel('probability')
 end
@@ -173,6 +205,7 @@ for i = 6:40
     xlabel('t [s]')
     ylabel('probability')
 end
+disp Finish
 
 %%
 pnshift = zeros(nsimul,1);
@@ -191,12 +224,28 @@ for i = 6:nsimul
     pnshift(i) = probn(1) - probn(indshift(i));
 end
 p = polyfit([11,12],[pnshift(11),pnshift(12)],1);
-figure
+H = 5;
+W = 8;
+figuA = figure;
+figuA.PaperUnits = 'centimeters';
+figuA.Units = 'centimeters';
+figuA.InvertHardcopy = 'on';
+figuA.PaperSize = [W H];
+figuA.PaperPosition = [0 0 W H];
+figuA.Position = [10 10 W H];
 xlimits = [paramval(1),paramval(end)];
 ylimits = [min(pnshift),max(pnshift)];
-plot(paramval,pnshift,'b.',(ylimits - p(2))/p(1),ylimits,'k',xlimits,[0.5 0.5],'r')
+hold on
+plot(xlimits,[0.5 0.5],'Color',colors(6,:))
+plot((ylimits - p(2))/p(1),ylimits,'Color',colors(1,:))
+plot(paramval,pnshift,'.','Color',colors(2,:))
+hold off
+grid on
+legend('$\Delta P = 0.5$','Linear regression','$\Delta P(n)$')
+xlabel('n')
+ylabel('$\Delta P$')
 nhalf = (0.5 - p(2))/p(1);
-title(['n_{min} = ',num2str(nhalf)])
+title(['$n_{half}$ = ',num2str(nhalf)])
 
 %% Best n
 cmd = sprintf('wsl %s%s %s %s=%.15g %s=%.15g %s=%.15g %s=%s', repertoire, executable, input,...
@@ -206,7 +255,66 @@ cmd = sprintf('wsl %s%s %s %s=%.15g %s=%.15g %s=%.15g %s=%s', repertoire, execut
 disp(cmd); system(cmd);
 %%
 fichier = 'n=11.0641';
-Analyse(fichier,delta,omega)
+% Analyse(fichier,delta,omega)
+
+H = 5;
+    W = 8;
+    figuA = figure;
+    figuA.PaperUnits = 'centimeters';
+    figuA.Units = 'centimeters';
+    figuA.InvertHardcopy = 'on';
+    figuA.PaperSize = [W H];
+    figuA.PaperPosition = [0 0 W H];
+    figuA.Position = [10 10 W H];
+    
+%     figure('Name',[param,' = ',num2str(paramval(i)),'; ',...
+%         'p_0 = ',num2str(ratioVE(i)),'; ',...
+%         'p_1 = ',num2str(V0/E(1)),'; ',...
+%         'E_1 = ',num2str(E(1)),'; ',...
+%         'V_0 = ',num2str(V0),'; ',...
+%         'width',num2str(2 * xbar)])
+%     subplot(1,2,1)
+    hold on
+    pcolor(x,t,psi2)
+%     if V0 >= E(1)
+%         plot([xbar,xbar],[min(t),max(t)],'w--','LineWidth',1)
+%         plot([-xbar,-xbar],[min(t),max(t)],'w--','LineWidth',1)
+%     end
+    hold off
+    shading interp
+    colormap jet
+    c = colorbar;
+    xlabel('x [m]')
+    ylabel('t [s]')
+    ylabel(c,'|\psi|^2')
+%     title(['$\Delta$ = ',num2str(paramval(i)),';   ',...
+%         '$V_0$ = ',num2str(V0),';   ',...
+%         '$p$ = ',num2str(V0/E(1))])
+    
+%     subplot(1,2,2)
+    H = 5;
+    W = 8;
+    figuA = figure;
+    figuA.PaperUnits = 'centimeters';
+    figuA.Units = 'centimeters';
+    figuA.InvertHardcopy = 'on';
+    figuA.PaperSize = [W H];
+    figuA.PaperPosition = [0 0 W H];
+    figuA.Position = [10 10 W H];
+    hold on
+    plot(t,probn,'Color',colors(6,:),'LineWidth',1)
+    plot(t,probp,'Color',colors(2,:),'LineWidth',1)
+    plot(t,probn + probp,'Color',colors(10,:),'LineWidth',1)
+    hold off
+    grid on
+    leg = legend('$P(x<0)$','$P(x>0)$','$P_\mathrm{total}$');
+%     leg.Color = 'none';
+    leg.Location = 'best';
+%     title(['$\Delta$ = ',num2str(paramval(i)),';   ',...
+%         '$V_0$ = ',num2str(V0),';   ',...
+%         '$p$ = ',num2str(V0/E(1))])
+    xlabel('t [s]')
+    ylabel('probability')
 
 %% Box, periodic potential
 repertoire = './';
@@ -261,7 +369,7 @@ disp('Data loaded')
 Analyse(fichier,delta,omega)
 
 %% All simulations
-for i = [1 10 20 30]
+for i = 1:30 %[1 10 20 30]
     fichier = [param pottype '=' num2str(paramval(i))];
     delta = paramval(i);
     psi2 = load([fichier '_psi2.out']);
@@ -299,19 +407,182 @@ cmd = sprintf('wsl %s%s %s %s=%s %s=%s %s=%.15g %s=%.15g %s=%.15g %s=%s', repert
                                              'wavetype','eigenstate',...
                                              'boxrange',100,...
                                              'infpot',0.001,...
-                                             'n',3,...
+                                             'n',1,...
                                              'output', 'TestBox');
     disp(cmd); system(cmd);
 %%
+boxr = 100;
+dx = x(2) - x(1);
+C = -0.5 / dx^2;
+nx = length(x);
+V0 = 0.001;
+% V0 = 100000;
+% Vbox = zeros(nx,1);
+% Vbox(x <= -boxr | x >= boxr) = V0;
+Vbox = 500 * sin(40 * 2.0 * pi * x / 400);
+A = diag(-2*C*ones(nx,1) + Vbox,0) + diag(C*ones(nx-1,1),1) + diag(C*ones(nx-1,1),-1);
+[Vec,D] = eig(A);
+En = diag(D);
+H = 5;
+W = 8;
+figuA = figure;
+figuA.PaperUnits = 'centimeters';
+figuA.Units = 'centimeters';
+figuA.InvertHardcopy = 'on';
+figuA.PaperSize = [W H];
+figuA.PaperPosition = [0 0 W H];
+figuA.Position = [10 10 W H];
+hold on
+for i = 1:5
+    plot(x,Vec(:,i),'Color',colors(2*i,:))
+end
+% for i = 1:4
+%     plot(x,Vec(:,149 + i),'Color',colors(2*i,:))
+% end
+% plot([boxr,boxr],[min(t),max(t)],'k--','LineWidth',1)
+% plot([-boxr,-boxr],[min(t),max(t)],'k--','LineWidth',1)
+xlabel('x [m]')
+ylabel('$\Phi_n$')
+legend('n = 1','n = 2','n = 3','n = 4','n = 5')
+% legend('n = 150','n = 151','n = 152','n = 153')
+hold off
+grid on
+
+H = 5;
+W = 8;
+figuA = figure;
+figuA.PaperUnits = 'centimeters';
+figuA.Units = 'centimeters';
+figuA.InvertHardcopy = 'on';
+figuA.PaperSize = [W H];
+figuA.PaperPosition = [0 0 W H];
+figuA.Position = [10 10 W H];
+% subplot(2,1,1)
+% hold on
+% for i = 1:5
+%     plot(i,En(i),'.','Color',colors(2*i,:))
+% end
+% xlabel('n')
+% ylabel('$E_n$')
+% hold off
+% grid on
+% box off
+% subplot(2,1,2)
+hold on
+plot(En,'.','Color',colors(1,:))
+xlabel('n')
+ylabel('$E_n$')
+hold off
+grid on
+box off
+
+%%
+for i = 1:301
+    figure
+    plot(x,Vec(:,i))
+end
+
+%%
+fichier = 'TestBox';
+    psi2 = load([fichier '_psi2.out']);
+    data = load([fichier '_obs.out']);
+    t = data(:,1);
+    probn = data(:,2);
+    probp = data(:,3);
+%     E = data(:,4);
+    data = load([fichier '_pot.out']);
+    x = data(:,1);
+
+H = 10;
+    W = 8;
+    figuA = figure;
+    figuA.PaperUnits = 'centimeters';
+    figuA.Units = 'centimeters';
+    figuA.InvertHardcopy = 'on';
+    figuA.PaperSize = [W H];
+    figuA.PaperPosition = [0 0 W H];
+    figuA.Position = [10 10 W H];
+    
+    hold on
+    pcolor(x,t,psi2)
+        plot([100,100],[min(t),max(t)],'w--','LineWidth',1)
+        plot([-100,-100],[min(t),max(t)],'w--','LineWidth',1)
+    hold off
+    shading interp
+    colormap jet
+    c = colorbar;
+    xlabel('x [m]')
+    ylabel('t [s]')
+    ylabel(c,'|\psi|^2')
+    
+    %%
 Analyse('TestBox',0,omega)
 
 %% Custom periodic
-cmd = sprintf('wsl %s%s %s %s=%s %s=%s %s=%.15g %s=%s', repertoire, executable, input,...
+cmd = sprintf('wsl %s%s %s %s=%s %s=%.15g %s=%s', repertoire, executable, input,...
                                              'potential','periodic',...
-                                             'wavetype','eigenstate',...
-                                             'n',3,...
+                                             'n',20,...
                                              'output', 'TestPer');
     disp(cmd); system(cmd);
+%%
+fichier = 'nPer=30';
+    psi2 = load([fichier '_psi2.out']);
+    data = load([fichier '_obs.out']);
+    t = data(:,1);
+    probn = data(:,2);
+    probp = data(:,3);
+    meanx = data(:,5);
+    meanp = data(:,7);
+    meanp2 = data(:,8);
+    data = load([fichier '_pot.out']);
+    x = data(:,1);
+
+H = 10;
+    W = 8;
+    figuA = figure;
+    figuA.PaperUnits = 'centimeters';
+    figuA.Units = 'centimeters';
+    figuA.InvertHardcopy = 'on';
+    figuA.PaperSize = [W H];
+    figuA.PaperPosition = [0 0 W H];
+    figuA.Position = [10 10 W H];
+    
+    hold on
+    pcolor(x,t,psi2)
+    hold off
+    shading interp
+    colormap jet
+    c = colorbar;
+    xlabel('x [m]')
+    ylabel('t [s]')
+    ylabel(c,'|\psi|^2')
+    
+    H = 5;
+    W = 8;
+    figuA = figure;
+    figuA.PaperUnits = 'centimeters';
+    figuA.Units = 'centimeters';
+    figuA.InvertHardcopy = 'on';
+    figuA.PaperSize = [W H];
+    figuA.PaperPosition = [0 0 W H];
+    figuA.Position = [10 10 W H];
+    plot(t,meanx)
+    xlabel('t [s]')
+    ylabel('$\langle x\rangle$')
+    
+    H = 5;
+    W = 8;
+    figuA = figure;
+    figuA.PaperUnits = 'centimeters';
+    figuA.Units = 'centimeters';
+    figuA.InvertHardcopy = 'on';
+    figuA.PaperSize = [W H];
+    figuA.PaperPosition = [0 0 W H];
+    figuA.Position = [10 10 W H];
+    plot(t,meanp)
+    xlabel('t [s]')
+    ylabel('$\langle p\rangle$')
+    
 %%
 Analyse('TestPer',0,omega)
 
